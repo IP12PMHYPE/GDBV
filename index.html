@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NazTok - No Watermark Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .gradient-text { background: linear-gradient(45deg, #fe2c55, #25f4ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .loader { border-top-color: #fe2c55; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .btn-primary { background: #fe2c55; }
+        .btn-primary:hover { background: #e0244a; }
+        .btn-secondary { background: #25f4ee; color: #000; }
+        .btn-secondary:hover { background: #1edbd5; }
+        
+        .shoutout-link { color: #fe2c55; font-weight: 600; transition: all 0.2s; }
+        .shoutout-link:hover { color: #25f4ee; text-decoration: underline; }
+
+        /* Rating Stars */
+        .star { cursor: pointer; transition: color 0.2s; color: #d1d5db; }
+        .star.active { color: #fbbf24; }
+        .star:hover { color: #f59e0b; }
+
+        .premium-badge {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        
+        #authorLink { transition: color 0.2s; }
+        #authorLink:hover { color: #fe2c55; text-decoration: underline; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-2xl w-full glass p-8 rounded-3xl shadow-2xl border border-gray-100">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-2 mb-2">
+                <h1 class="text-4xl font-extrabold gradient-text">NazTok</h1>
+                <span id="premiumIndicator" class="hidden premium-badge">Premium</span>
+            </div>
+            <p class="text-gray-500 font-medium">No Watermark Video & MP3 Downloader</p>
+            
+            <!-- Rating System -->
+            <div id="ratingBox" class="mt-4 bg-gray-50 inline-block px-4 py-2 rounded-2xl border border-gray-100">
+                <p class="text-xs text-gray-400 mb-1 uppercase tracking-tighter">Rate us for Premium</p>
+                <div class="flex gap-1 justify-center">
+                    <i class="fas fa-star star" onclick="rate(1)"></i>
+                    <i class="fas fa-star star" onclick="rate(2)"></i>
+                    <i class="fas fa-star star" onclick="rate(3)"></i>
+                    <i class="fas fa-star star" onclick="rate(4)"></i>
+                    <i class="fas fa-star star" onclick="rate(5)"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="relative mb-6">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i class="fab fa-tiktok text-gray-400"></i>
+            </div>
+            <input type="text" id="videoUrl" 
+                class="block w-full pl-11 pr-32 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all outline-none text-gray-700" 
+                placeholder="Paste link (TikTok or Douyin)...">
+            <button onclick="fetchVideo()" id="btnAction"
+                class="absolute right-2 top-2 bottom-2 px-6 btn-primary text-white font-bold rounded-xl transition-all shadow-lg flex items-center gap-2">
+                <span>Go</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Progress/Status Area -->
+        <div id="statusArea" class="hidden text-center py-4">
+            <div class="flex flex-col items-center gap-3">
+                <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10"></div>
+                <p id="statusText" class="text-gray-600 font-medium italic">Searching content...</p>
+            </div>
+        </div>
+
+        <!-- Result Area -->
+        <div id="resultArea" class="hidden mt-6 animate-fade-in">
+            <div class="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col md:flex-row gap-6 shadow-inner">
+                <div class="w-full md:w-48 h-64 bg-gray-200 rounded-xl overflow-hidden relative group">
+                    <div id="videoPreviewContainer" class="hidden w-full h-full">
+                        <video id="premiumVideo" class="w-full h-full object-cover" controls></video>
+                    </div>
+                    <img id="videoThumb" src="" alt="Thumbnail" class="w-full h-full object-cover">
+                    <div id="playIcon" class="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/40 transition-all cursor-pointer" onclick="togglePreview()">
+                        <i class="fas fa-play text-white text-3xl opacity-80"></i>
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 id="videoTitle" class="font-bold text-lg text-gray-800 line-clamp-2 mb-2">Video Title</h3>
+                        <p class="text-sm text-gray-500 mb-4">by <a id="authorLink" href="#" target="_blank" class="font-semibold italic">@username</a></p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <!-- Video Download -->
+                        <button id="downloadBtn" onclick="handleDownload('video')" 
+                           class="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all shadow-md">
+                            <i class="fas fa-video"></i>
+                            <span id="btnText">Video (No Watermark)</span>
+                        </button>
+
+                        <!-- MP3 Download -->
+                        <div class="grid grid-cols-1 gap-2" id="audioControls">
+                            <button id="musicBtn" onclick="handleDownload('music')" 
+                               class="flex items-center justify-center gap-2 w-full py-3 btn-secondary font-bold rounded-xl transition-all shadow-md">
+                                <i class="fas fa-music"></i>
+                                <span id="musicBtnText">Download MP3</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Premium Audio Options -->
+                        <div id="premiumAudio" class="hidden grid grid-cols-2 gap-2 mt-2">
+                            <button onclick="handleDownload('music', 'wav')" class="py-2 text-xs bg-gray-800 text-white rounded-lg font-bold hover:bg-black transition-all">WAV High Quality</button>
+                            <button onclick="handleDownload('music', 'm4a')" class="py-2 text-xs bg-gray-800 text-white rounded-lg font-bold hover:bg-black transition-all">M4A Optimized</button>
+                        </div>
+
+                        <button onclick="resetUI()" class="text-sm text-gray-400 hover:text-gray-600 underline w-full text-center">
+                            Download another
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Area -->
+        <div id="errorArea" class="hidden mt-4 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-center text-sm">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Content not found.</span>
+        </div>
+
+        <!-- Credits & Copyright Section -->
+        <div class="mt-8 pt-6 border-t border-gray-100 text-center space-y-2">
+            <p class="text-gray-600 text-sm font-medium">
+                Made By <a href="https://www.tiktok.com/@iphone_melt" target="_blank" class="shoutout-link">@IP12PMHYPE</a> 
+                Shoutout To <a href="https://www.tiktok.com/@gadgetbruv" target="_blank" class="shoutout-link">@Gadgetbruv</a>
+            </p>
+            <p class="text-gray-400 text-xs">
+                &copy; <span id="year"></span> NazTok. All rights reserved.
+            </p>
+        </div>
+    </div>
+
+    <!-- Footer Disclaimer -->
+    <p class="mt-6 text-gray-400 text-[10px] text-center max-w-md uppercase tracking-widest">
+        For personal use only. Not affiliated with TikTok.
+    </p>
+
+    <script>
+        const API_ENDPOINT = "https://www.tikwm.com/api/";
+        let currentVideoData = null;
+        let isPremium = false;
+
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        function rate(stars) {
+            const starElements = document.querySelectorAll('.star');
+            starElements.forEach((s, i) => {
+                s.classList.toggle('active', i < stars);
+            });
+
+            if (stars === 5) {
+                isPremium = true;
+                document.getElementById('premiumIndicator').classList.remove('hidden');
+                document.getElementById('premiumAudio').classList.remove('hidden');
+                document.getElementById('ratingBox').innerHTML = `<p class="text-xs text-yellow-600 font-bold uppercase"><i class="fas fa-crown"></i> Lifetime Premium Active</p>`;
+            }
+        }
+
+        function togglePreview() {
+            if (!isPremium) {
+                showError("Preview is a Premium feature. Rate us 5 stars to unlock!");
+                return;
+            }
+            if (!currentVideoData) return;
+
+            const videoContainer = document.getElementById('videoPreviewContainer');
+            const videoElem = document.getElementById('premiumVideo');
+            const thumb = document.getElementById('videoThumb');
+            const icon = document.getElementById('playIcon');
+
+            videoContainer.classList.remove('hidden');
+            thumb.classList.add('hidden');
+            icon.classList.add('hidden');
+
+            let vUrl = currentVideoData.play;
+            if (vUrl && !vUrl.startsWith('http')) vUrl = `https://www.tikwm.com${vUrl}`;
+            
+            videoElem.src = vUrl;
+            videoElem.play();
+        }
+
+        async function fetchVideo() {
+            const urlInput = document.getElementById('videoUrl');
+            const url = urlInput.value.trim();
+            const statusArea = document.getElementById('statusArea');
+            const resultArea = document.getElementById('resultArea');
+            const errorArea = document.getElementById('errorArea');
+            const btnAction = document.getElementById('btnAction');
+
+            if (!url) {
+                showError("Please paste a link first.");
+                return;
+            }
+
+            errorArea.classList.add('hidden');
+            resultArea.classList.add('hidden');
+            statusArea.classList.remove('hidden');
+            btnAction.disabled = true;
+
+            try {
+                const response = await fetch(`${API_ENDPOINT}?url=${encodeURIComponent(url)}`);
+                const result = await response.json();
+
+                if (result.code === 0 && result.data) {
+                    currentVideoData = result.data;
+                    displayResult(result.data);
+                } else {
+                    showError(result.msg || "Link invalid or video is private.");
+                }
+            } catch (err) {
+                showError("Connection failed. Try again.");
+            } finally {
+                statusArea.classList.add('hidden');
+                btnAction.disabled = false;
+            }
+        }
+
+        function displayResult(data) {
+            document.getElementById('resultArea').classList.remove('hidden');
+            document.getElementById('videoThumb').src = data.cover;
+            document.getElementById('videoThumb').classList.remove('hidden');
+            document.getElementById('playIcon').classList.remove('hidden');
+            document.getElementById('videoPreviewContainer').classList.add('hidden');
+            document.getElementById('premiumVideo').pause();
+
+            document.getElementById('videoTitle').innerText = data.title || "Untitled Content";
+            
+            // Dynamic Author Linking
+            const authorLink = document.getElementById('authorLink');
+            if (data.author) {
+                authorLink.innerText = `@${data.author.unique_id}`;
+                authorLink.href = `https://www.tiktok.com/@${data.author.unique_id}`;
+            } else {
+                authorLink.innerText = "@unknown";
+                authorLink.href = "#";
+            }
+            
+            document.getElementById('btnText').innerText = "Video (No Watermark)";
+            document.getElementById('musicBtnText').innerText = "Download MP3";
+        }
+
+        async function handleDownload(type, format = 'mp3') {
+            if (!currentVideoData) return;
+
+            const isVideo = type === 'video';
+            const btn = isVideo ? document.getElementById('downloadBtn') : document.getElementById('musicBtn');
+            const btnText = isVideo ? document.getElementById('btnText') : document.getElementById('musicBtnText');
+            
+            let targetUrl = isVideo ? currentVideoData.play : currentVideoData.music;
+            if (!targetUrl) {
+                showError("Resource not available.");
+                return;
+            }
+
+            // Fixed Absolute URL check
+            if (targetUrl && !targetUrl.startsWith('http')) {
+                targetUrl = `https://www.tikwm.com${targetUrl}`;
+            }
+
+            btnText.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+            
+            try {
+                const response = await fetch(targetUrl);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const ext = isVideo ? 'mp4' : format;
+                const filename = `NazTok_${currentVideoData.id}_${type}.${ext}`;
+                
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(blobUrl);
+                    document.body.removeChild(a);
+                    btnText.innerHTML = `<i class="fas fa-check"></i> Done!`;
+                }, 1000);
+
+            } catch (err) {
+                window.open(targetUrl, '_blank');
+                btnText.innerHTML = `<i class="fas fa-external-link-alt"></i> Manual Save`;
+            }
+
+            setTimeout(() => {
+                btnText.innerText = isVideo ? "Video (No Watermark)" : "Download MP3";
+            }, 3000);
+        }
+
+        function showError(msg) {
+            const errorArea = document.getElementById('errorArea');
+            document.getElementById('errorMessage').innerText = msg;
+            errorArea.classList.remove('hidden');
+            setTimeout(() => errorArea.classList.add('hidden'), 5000);
+        }
+
+        function resetUI() {
+            document.getElementById('videoUrl').value = '';
+            document.getElementById('resultArea').classList.add('hidden');
+            document.getElementById('errorArea').classList.add('hidden');
+            currentVideoData = null;
+        }
+
+        document.getElementById('videoUrl').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fetchVideo();
+        });
+    </script>
+</body>
+</html>

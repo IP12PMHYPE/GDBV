@@ -13,22 +13,15 @@
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
             color: #1e293b;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .card-shadow {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
         }
 
-        /* Dynamic Logo Animation */
         .dynamic-logo {
-            background: linear-gradient(
-                to right, 
-                #000000, 
-                #2563eb, 
-                #db2777, 
-                #7c3aed, 
-                #000000
-            );
+            background: linear-gradient(to right, #000000, #2563eb, #db2777, #7c3aed, #000000);
             background-size: 400% auto;
             -webkit-background-clip: text;
             background-clip: text;
@@ -43,20 +36,15 @@
         }
 
         .loader {
-            border: 3px solid #e2e8f0;
-            border-top: 3px solid #2563eb;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid currentColor;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .tiktok-input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
 
         input[type=range] {
             -webkit-appearance: none;
@@ -65,220 +53,425 @@
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: #e2e8f0;
-            border-radius: 3px;
+            border-radius: 4px;
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 18px;
-            width: 18px;
+            height: 20px;
+            width: 20px;
             border-radius: 50%;
             background: #2563eb;
             cursor: pointer;
             margin-top: -6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .photo-slide {
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        /* Modal Backdrop */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Navigation -->
-    <nav class="bg-white border-b border-gray-200">
+    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2">
+                <div onclick="resetToHome()" class="flex items-center gap-2 cursor-pointer">
                     <div class="bg-black text-white p-1.5 rounded-lg">
                         <i class="fab fa-tiktok text-xl"></i>
                     </div>
                     <span class="text-xl font-extrabold tracking-tight dynamic-logo">NAZTOK</span>
                 </div>
-                <div class="text-sm font-medium text-gray-500 flex items-center gap-2">
-                    <span class="hidden sm:inline">2026 Edition</span>
-                    <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">PRO</span>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleChangelog(true)" class="hidden sm:flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                        <i class="fas fa-list-ul"></i> See what's new
+                    </button>
+                    <div class="text-sm font-medium text-gray-500 flex items-center gap-2">
+                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-black uppercase">V1.02</span>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="flex-grow container max-w-4xl mx-auto px-4 py-12">
-        <div class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">TikTok Downloader</h1>
-            <p class="text-gray-600 text-lg">Download videos or customize audio with <span class="text-blue-600 font-bold">Audio Lab</span></p>
+    <!-- Mobile Changelog Trigger -->
+    <div class="sm:hidden flex justify-center mt-4">
+        <button onclick="toggleChangelog(true)" class="text-xs font-bold text-blue-600 hover:underline">
+            <i class="fas fa-sparkles mr-1"></i> See what's new in V1.02
+        </button>
+    </div>
+
+    <!-- Changelog Modal -->
+    <div id="changelog-modal" class="fixed inset-0 z-[100] modal-overlay hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden fade-in-up">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h3 class="text-xl font-extrabold text-gray-900">What's New</h3>
+                    <p class="text-xs font-bold text-blue-600 tracking-widest uppercase">Version 1.02 Update</p>
+                </div>
+                <button onclick="toggleChangelog(false)" class="w-10 h-10 rounded-full hover:bg-gray-200 flex items-center justify-center text-gray-400 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <ul class="space-y-3">
+                    <li class="flex items-start gap-3">
+                        <div class="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 text-[10px]"><i class="fas fa-check"></i></div>
+                        <p class="text-gray-700 font-medium text-sm">Added Photo Post Support</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 text-[10px]"><i class="fas fa-check"></i></div>
+                        <p class="text-gray-700 font-medium text-sm">Fixed Bugs And Lags</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 text-[10px]"><i class="fas fa-check"></i></div>
+                        <p class="text-gray-700 font-medium text-sm">Added Slider On The Audio Lab</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 text-[10px]"><i class="fas fa-check"></i></div>
+                        <p class="text-gray-700 font-medium text-sm">Added Loop On The Audio Lab</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 text-[10px]"><i class="fas fa-check"></i></div>
+                        <p class="text-gray-700 font-medium text-sm">Fixed Video Playback Issue</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="mt-1 w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-[10px]"><i class="fas fa-info"></i></div>
+                        <p class="text-gray-700 font-medium text-sm">Removed Output Quality (Auto-Optimized)</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 text-[10px]"><i class="fas fa-check"></i></div>
+                        <p class="text-gray-700 font-medium text-sm">Added "Download another Video" Button</p>
+                    </li>
+                </ul>
+                <button onclick="toggleChangelog(false)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20 mt-4">
+                    Awesome!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow container max-w-4xl mx-auto px-4 py-8 md:py-12">
+        <!-- Hero Section -->
+        <div id="hero-section" class="text-center mb-8 md:mb-10">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 md:mb-4">TikTok Downloader</h1>
+            <p class="text-gray-600 text-base md:text-lg">Save videos, photo posts, or remix sounds with <span class="text-blue-600 font-bold">Audio Lab</span></p>
+            
+            <div class="mt-6">
+                <a href="https://ip12pmhype.github.io/SONIC-STRETCH" target="_blank" class="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-full shadow-lg shadow-purple-500/30 transition-all hover:scale-105 active:scale-95 animate-pulse">
+                    <i class="fas fa-rocket"></i>
+                    check out our new Ultimate Audio Stretcher now!
+                </a>
+            </div>
         </div>
 
         <!-- Input Section -->
-        <div class="bg-white p-6 sm:p-8 rounded-2xl card-shadow mb-8">
+        <div id="input-container" class="bg-white p-5 md:p-8 rounded-2xl card-shadow mb-8 border border-gray-100">
             <div class="flex flex-col sm:flex-row gap-3">
                 <div class="relative flex-grow group">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                        <i class="fas fa-link"></i>
+                        <i class="fas fa-link text-sm"></i>
                     </div>
                     <input id="tiktok-url" type="text" 
-                        placeholder="Paste TikTok video link here..." 
-                        class="tiktok-input block w-full pl-11 pr-24 py-4 border border-gray-300 rounded-xl bg-gray-50 text-gray-900 transition-all outline-none">
-                    <!-- Paste Button inside Input -->
-                    <button onclick="pasteFromClipboard()" class="absolute inset-y-2 right-2 px-3 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg text-xs font-bold transition-all uppercase tracking-tighter">
+                        placeholder="Paste TikTok link here..." 
+                        class="block w-full pl-11 pr-24 py-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-base">
+                    <button id="paste-btn" class="absolute inset-y-2 right-2 px-3 bg-gray-200 hover:bg-gray-300 active:scale-95 text-gray-600 rounded-lg text-xs font-bold transition-all uppercase tracking-tighter">
                         Paste
                     </button>
                 </div>
-                <button onclick="fetchVideoData()" id="fetch-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2">
+                <button onclick="fetchVideoData()" id="fetch-btn" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+                    <i class="fas fa-bolt"></i>
                     <span>Fetch</span>
                 </button>
             </div>
-            <p class="mt-4 text-xs text-gray-400 text-center">Free high-quality extraction. No watermarks.</p>
+            <p class="mt-4 text-[10px] md:text-xs text-gray-400 text-center uppercase tracking-widest font-bold">HQ Extraction • Photo Posts • 2026 Engine</p>
         </div>
 
         <!-- Loading State -->
-        <div id="loading-state" class="hidden flex flex-col items-center py-12">
-            <div class="loader mb-4"></div>
-            <p class="text-gray-500 font-medium">Processing request...</p>
+        <div id="loading-state" class="hidden flex flex-col items-center py-12 fade-in-up">
+            <div class="loader mb-4 text-blue-600" style="width: 32px; height: 32px; border-width: 4px;"></div>
+            <p class="text-gray-500 font-medium">Analyzing URL...</p>
         </div>
 
         <!-- Results Section -->
-        <div id="result-section" class="hidden grid md:grid-cols-5 gap-8 items-start">
-            <!-- Preview -->
-            <div class="md:col-span-2">
-                <div class="bg-black rounded-2xl overflow-hidden aspect-[9/16] relative group card-shadow mb-4">
-                    <img id="video-thumb" src="" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <i class="fas fa-play text-white text-4xl opacity-80"></i>
+        <div id="result-section" class="hidden grid md:grid-cols-5 gap-6 md:gap-8 items-start fade-in-up">
+            <div class="md:col-span-2 space-y-4">
+                <!-- Media Display Area -->
+                <div class="bg-black rounded-2xl overflow-hidden aspect-[9/16] relative group card-shadow border-4 border-white">
+                    <!-- Video Player -->
+                    <video id="video-player" class="w-full h-full object-cover hidden" controls playsinline crossorigin="anonymous" referrerpolicy="no-referrer"></video>
+                    
+                    <!-- Photo Gallery (Hidden by default) -->
+                    <div id="photo-gallery" class="w-full h-full relative hidden bg-gray-900">
+                        <img id="current-photo" src="" class="w-full h-full object-contain photo-slide">
+                        <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-1" id="photo-dots">
+                            <!-- Dots injected via JS -->
+                        </div>
                     </div>
                 </div>
                 
-                <div class="bg-white p-4 rounded-xl border border-gray-200">
-                    <a id="video-link" href="#" target="_blank" class="block group">
-                        <h2 id="video-title" class="font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">Video Title</h2>
-                    </a>
-                    <p id="video-author" class="text-blue-600 text-sm font-semibold">@username</p>
+                <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <h2 id="video-title" class="font-bold text-gray-900 line-clamp-2 mb-1">Video Title</h2>
+                    <p id="video-author" class="text-blue-600 text-sm font-bold">@username</p>
                 </div>
             </div>
 
-            <!-- Options -->
-            <div class="md:col-span-3 space-y-6">
-                <!-- Tabs -->
-                <div class="flex bg-gray-100 p-1 rounded-xl">
-                    <button onclick="switchTab('download')" id="tab-download" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all bg-white shadow-sm text-blue-600">Download</button>
-                    <button onclick="switchTab('lab')" id="tab-lab" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-700">Audio Lab ✨</button>
+            <div class="md:col-span-3 flex flex-col gap-6">
+                <!-- Navigation Tabs -->
+                <div class="flex bg-gray-100 p-1.5 rounded-2xl">
+                    <button onclick="switchTab('download')" id="tab-download" class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all bg-white shadow-sm text-blue-600">Download</button>
+                    <button onclick="switchTab('lab')" id="tab-lab" class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all text-gray-500 hover:text-gray-700">Audio Lab ✨</button>
                 </div>
 
-                <!-- Download Tab Content -->
-                <div id="content-download" class="space-y-4">
-                    <div class="space-y-3">
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Video Formats</h3>
-                        <button onclick="handleDownload('play')" class="w-full flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                <!-- Download Content -->
+                <div id="content-download" class="space-y-4 flex-grow">
+                    
+                    <!-- Normal Video Assets -->
+                    <div id="video-assets" class="space-y-3">
+                        <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Video Asset</h3>
+                        <button onclick="handleDownload('play')" class="download-trigger w-full flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all group shadow-sm">
+                            <div class="flex items-center gap-4">
+                                <div class="icon-box w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
                                     <i class="fas fa-video"></i>
                                 </div>
-                                <span class="font-bold text-gray-700 text-left">No Watermark (HD)</span>
+                                <div class="text-left">
+                                    <div class="label font-bold text-gray-800">HD Video</div>
+                                    <div class="text-xs text-gray-400">No Watermark • MP4</div>
+                                </div>
                             </div>
-                            <i class="fas fa-download text-gray-300 group-hover:text-blue-500"></i>
+                            <i class="fas fa-chevron-right text-gray-300 group-hover:text-blue-500 transition-all group-hover:translate-x-1"></i>
+                        </button>
+                    </div>
+
+                    <!-- Photo Post Assets -->
+                    <div id="photo-assets" class="space-y-3 hidden">
+                        <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Photo Post Assets</h3>
+                        
+                        <button onclick="downloadAllPhotos()" id="download-photos-btn" class="w-full flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all group shadow-sm">
+                            <div class="flex items-center gap-4">
+                                <div class="icon-box w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
+                                    <i class="fas fa-images"></i>
+                                </div>
+                                <div class="text-left">
+                                    <div class="label font-bold text-gray-800">Download Photos</div>
+                                    <div class="text-xs text-gray-400" id="photo-count-label">Multiple HD Images</div>
+                                </div>
+                            </div>
+                            <i class="fas fa-download text-gray-300 group-hover:text-emerald-500 transition-all"></i>
+                        </button>
+
+                        <button onclick="renderPhotosToVideo()" id="render-video-btn" class="w-full flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl hover:border-purple-500 hover:bg-purple-50 transition-all group shadow-sm">
+                            <div class="flex items-center gap-4">
+                                <div class="icon-box w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-lg">
+                                    <i class="fas fa-film"></i>
+                                </div>
+                                <div class="text-left">
+                                    <div class="label font-bold text-gray-800">Render to Video</div>
+                                    <div class="text-xs text-gray-400">Creates a video slideshow</div>
+                                </div>
+                            </div>
+                            <i class="fas fa-magic text-gray-300 group-hover:text-purple-500 transition-all"></i>
                         </button>
                     </div>
 
                     <div class="space-y-3">
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Quick Audio</h3>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="handleDownload('mp3')" class="flex items-center justify-center gap-2 p-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50">
-                                <i class="fas fa-music text-pink-500"></i> Original MP3
+                        <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Audio Assets</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button onclick="handleDownload('mp3')" class="download-trigger flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-2xl font-bold text-gray-700 hover:bg-gray-50 shadow-sm">
+                                <div class="icon-box w-10 h-10 rounded-lg bg-pink-100 text-pink-500 flex items-center justify-center">
+                                    <i class="fas fa-music"></i>
+                                </div>
+                                <span class="label">Original MP3</span>
                             </button>
-                            <button onclick="handleDownload('aac')" class="flex items-center justify-center gap-2 p-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50">
-                                <i class="fas fa-file-audio text-blue-500"></i> High AAC
+                            <button onclick="handleDownload('aac')" class="download-trigger flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-2xl font-bold text-gray-700 hover:bg-gray-50 shadow-sm">
+                                <div class="icon-box w-10 h-10 rounded-lg bg-indigo-100 text-indigo-500 flex items-center justify-center">
+                                    <i class="fas fa-file-audio"></i>
+                                </div>
+                                <span class="label">High AAC</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Post-Download Help -->
+                    <div id="post-download-help" class="hidden pt-6 border-t border-dashed border-gray-200 fade-in-up">
+                        <div class="text-center space-y-3">
+                            <p class="text-sm font-medium text-gray-500">Download started? If not:</p>
+                            <button onclick="retryLastDownload()" class="text-blue-600 font-bold text-sm hover:underline">
+                                <i class="fas fa-redo-alt mr-1"></i> Retry Download
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Audio Lab Tab Content -->
-                <div id="content-lab" class="hidden space-y-6 animate-in fade-in duration-300">
-                    <!-- Live Preview Player -->
-                    <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 shadow-inner">
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-white text-xs font-bold uppercase tracking-wider">Live Audio Preview</span>
-                            <div id="preview-status" class="text-[10px] text-gray-400 italic">Ready to play</div>
+                <!-- Lab Content -->
+                <div id="content-lab" class="hidden space-y-6 fade-in-up flex-grow">
+                    <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-2xl">
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                <span class="text-white text-[10px] font-black uppercase tracking-widest">Lab Preview Engine</span>
+                            </div>
+                            <div id="preview-status" class="text-[10px] text-gray-500 font-medium">Ready</div>
                         </div>
-                        <div class="flex gap-2">
-                            <button id="preview-play-btn" onclick="toggleAudioPreview()" class="flex-grow bg-white text-black font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-200 transition-all">
+                        <div class="flex gap-3">
+                            <button id="preview-play-btn" onclick="toggleAudioPreview()" class="flex-grow bg-white hover:bg-gray-100 active:scale-95 text-black font-black py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg">
                                 <i class="fas fa-play"></i> <span>Play Preview</span>
                             </button>
-                            <button onclick="stopAudioPreview()" class="px-4 bg-gray-800 text-white rounded-lg hover:bg-gray-700">
-                                <i class="fas fa-stop"></i>
+                            <button onclick="stopAudioPreview()" class="w-14 bg-gray-800 hover:bg-gray-700 active:scale-95 text-white rounded-xl flex items-center justify-center transition-all">
+                                <i class="fas fa-stop text-sm"></i>
                             </button>
                         </div>
-                    </div>
 
-                    <!-- Speed Control -->
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-end">
-                            <label class="text-sm font-bold text-gray-700">Speed (Stretch)</label>
-                            <span id="speed-val" class="text-xs font-mono bg-white px-2 py-1 rounded border">1.0x</span>
+                        <!-- Progress & Loop Section -->
+                        <div class="mt-5 pt-4 border-t border-gray-800">
+                            <div class="flex justify-between items-center text-xs text-gray-400 font-mono mb-3">
+                                <span id="audio-current-time">0:00</span>
+                                <button onclick="toggleLoop()" id="loop-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-all active:scale-95">
+                                    <i class="fas fa-repeat"></i> <span id="loop-text" class="font-bold">Loop: OFF</span>
+                                </button>
+                                <span id="audio-total-time">0:00</span>
+                            </div>
+                            <input type="range" id="progress-range" min="0" max="100" value="0" step="0.1" 
+                                class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer"
+                                oninput="handleSeekInput(this.value)"
+                                onchange="seekAudio(this.value)">
                         </div>
-                        <input type="range" id="speed-range" min="0.5" max="2.0" step="0.05" value="1.0" oninput="updateLabLabel('speed', this.value)">
                     </div>
 
-                    <!-- Pitch Control -->
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-end">
-                            <label class="text-sm font-bold text-gray-700">Pitch (Shift)</label>
-                            <span id="pitch-val" class="text-xs font-mono bg-white px-2 py-1 rounded border">0 Semitones</span>
+                    <div class="bg-white p-5 rounded-2xl border border-gray-100 space-y-6">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-end">
+                                <label class="text-sm font-bold text-gray-700">Playback Speed</label>
+                                <span id="speed-val" class="text-xs font-mono bg-blue-50 text-blue-600 px-2 py-1 rounded-lg border border-blue-100 font-bold">1.0x</span>
+                            </div>
+                            <input type="range" id="speed-range" min="0.5" max="2.0" step="0.01" value="1.0" oninput="updateLabLabel('speed', this.value)">
                         </div>
-                        <input type="range" id="pitch-range" min="-12" max="12" step="1" value="0" oninput="updateLabLabel('pitch', this.value)">
+
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-end">
+                                <label class="text-sm font-bold text-gray-700">Pitch Shift</label>
+                                <span id="pitch-val" class="text-xs font-mono bg-pink-50 text-pink-600 px-2 py-1 rounded-lg border border-pink-100 font-bold">0 Semitones</span>
+                            </div>
+                            <input type="range" id="pitch-range" min="-12" max="12" step="1" value="0" oninput="updateLabLabel('pitch', this.value)">
+                        </div>
                     </div>
 
-                    <!-- Quality -->
-                    <div class="space-y-3">
-                        <label class="text-sm font-bold text-gray-700 block">Output Quality</label>
-                        <select id="quality-select" class="w-full p-3 bg-white border border-gray-200 rounded-xl font-medium outline-none">
-                            <option value="128">128 kbps (Standard)</option>
-                            <option value="192">192 kbps (Medium)</option>
-                            <option value="256">256 kbps (High)</option>
-                            <option value="320" selected>320 kbps (Ultra Pro)</option>
-                        </select>
-                    </div>
-
-                    <button onclick="renderAndDownloadAudio()" id="render-btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                        <i class="fas fa-magic"></i>
-                        <span>Render & Download Lab Mix</span>
+                    <button onclick="renderAndDownloadAudio()" id="render-btn" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3 active:scale-[0.98]">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        <span>Render & Export Lab Mix</span>
                     </button>
                 </div>
+
+                <!-- Global Download Another Video Button -->
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <button onclick="resetToHome()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                        <i class="fas fa-plus-circle"></i> Download Another Video
+                    </button>
+                </div>
+
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 py-10 mt-12">
+    <footer class="bg-white border-t border-gray-100 py-12 mt-12">
         <div class="max-w-5xl mx-auto px-4 text-center">
-            <div class="flex justify-center gap-6 mb-6 text-gray-400 text-xl">
-                <a href="https://www.tiktok.com/@iphone_melt" target="_blank" class="hover:text-black transition-colors"><i class="fab fa-tiktok"></i></a>
-                <a href="https://www.tiktok.com/@gadgetbruv" target="_blank" class="hover:text-blue-600 transition-colors"><i class="fas fa-shield-halved"></i></a>
+            <div class="flex justify-center gap-8 mb-8">
+                <a href="https://www.tiktok.com/@iphone_melt" target="_blank" class="text-gray-400 hover:text-black transition-all hover:scale-110"><i class="fab fa-tiktok text-2xl"></i></a>
+                <a href="https://www.tiktok.com/@gadgetbruv" target="_blank" class="text-gray-400 hover:text-blue-600 transition-all hover:scale-110"><i class="fas fa-shield-heart text-2xl"></i></a>
             </div>
-            <p class="text-gray-500 text-sm">
-                Built by <a href="https://www.tiktok.com/@iphone_melt" target="_blank" class="font-bold text-gray-900 hover:underline">@iphone_melt</a> & <a href="https://www.tiktok.com/@gadgetbruv" target="_blank" class="font-bold text-gray-900 hover:underline">Gadgetbruv</a>
+            <p class="text-gray-500 text-sm mb-2">
+                Engineered with ❤️ by <a href="#" class="font-bold text-gray-900">@iphone_melt</a> & <a href="#" class="font-bold text-gray-900">Gadgetbruv</a>
             </p>
-            <p class="text-gray-400 text-xs mt-2">&copy; 2026 Naztok. All rights reserved.</p>
+            <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">&copy; 2026 NAZTOK LABS. ALL RIGHTS RESERVED.</p>
         </div>
     </footer>
 
     <script>
         let currentData = null;
-        let originalInputUrl = "";
-        let audioContext = null;
+        let lastDownloadConfig = null;
+        let audioCtx = null;
         let sourceNode = null;
         let decodedAudioBuffer = null;
         let isPreviewPlaying = false;
+        let galleryInterval = null;
+        let isLooping = false;
+        let audioProgressInterval = null;
+        let playbackStartTime = 0;
+        let pauseOffset = 0;
+        let isDraggingSeek = false;
 
-        async function pasteFromClipboard() {
-            try {
-                const text = await navigator.clipboard.readText();
-                if (text) {
-                    document.getElementById('tiktok-url').value = text;
-                }
-            } catch (err) {
-                // Fallback for older browsers or restricted environments
-                document.execCommand('paste');
+        // Changelog Toggle
+        function toggleChangelog(show) {
+            const modal = document.getElementById('changelog-modal');
+            if (show) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
             }
         }
+
+        // Reset App State
+        function resetToHome() {
+            stopAudioPreview();
+            
+            // Stop and reset video player
+            const videoElement = document.getElementById('video-player');
+            videoElement.pause();
+            videoElement.removeAttribute('src');
+            
+            // Clear gallery
+            if(galleryInterval) clearInterval(galleryInterval);
+            
+            currentData = null;
+            lastDownloadConfig = null;
+            pauseOffset = 0;
+            isLooping = false;
+            
+            // Reset Progress UI
+            document.getElementById('progress-range').value = 0;
+            document.getElementById('audio-current-time').innerText = "0:00";
+            document.getElementById('audio-total-time').innerText = "0:00";
+            const loopBtn = document.getElementById('loop-btn');
+            loopBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-all active:scale-95";
+            document.getElementById('loop-text').innerText = 'Loop: OFF';
+
+            document.getElementById('tiktok-url').value = "";
+            document.getElementById('result-section').classList.add('hidden');
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('post-download-help').classList.add('hidden');
+            document.getElementById('input-container').classList.remove('hidden');
+            document.getElementById('hero-section').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Clipboard
+        document.getElementById('paste-btn').addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) document.getElementById('tiktok-url').value = text;
+            } catch (err) {
+                document.getElementById('tiktok-url').focus();
+            }
+        });
 
         function switchTab(tab) {
             const downloadBtn = document.getElementById('tab-download');
@@ -287,23 +480,29 @@
             const labContent = document.getElementById('content-lab');
 
             if (tab === 'download') {
-                downloadBtn.className = "flex-1 py-2 rounded-lg text-sm font-bold transition-all bg-white shadow-sm text-blue-600";
-                labBtn.className = "flex-1 py-2 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-700";
+                downloadBtn.className = "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all bg-white shadow-sm text-blue-600";
+                labBtn.className = "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all text-gray-500 hover:text-gray-700";
                 downloadContent.classList.remove('hidden');
                 labContent.classList.add('hidden');
                 stopAudioPreview();
             } else {
-                labBtn.className = "flex-1 py-2 rounded-lg text-sm font-bold transition-all bg-white shadow-sm text-blue-600";
-                downloadBtn.className = "flex-1 py-2 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-700";
+                labBtn.className = "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all bg-white shadow-sm text-blue-600";
+                downloadBtn.className = "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all text-gray-500 hover:text-gray-700";
                 labContent.classList.remove('hidden');
                 downloadContent.classList.add('hidden');
+                // Pause video if Audio lab is opened
+                document.getElementById('video-player').pause();
             }
         }
 
         function updateLabLabel(type, val) {
             if (type === 'speed') {
                 document.getElementById('speed-val').innerText = `${parseFloat(val).toFixed(2)}x`;
-                if (sourceNode && isPreviewPlaying) sourceNode.playbackRate.value = val;
+                if (sourceNode && isPreviewPlaying) {
+                    pauseOffset += (audioCtx.currentTime - playbackStartTime) * sourceNode.playbackRate.value;
+                    playbackStartTime = audioCtx.currentTime;
+                    sourceNode.playbackRate.value = val;
+                }
             } else {
                 document.getElementById('pitch-val').innerText = `${val} Semitones`;
                 if (sourceNode && isPreviewPlaying) sourceNode.detune.value = val * 100;
@@ -315,10 +514,11 @@
             const url = urlInput.value.trim();
             if (!url) return;
 
-            originalInputUrl = url;
             const loading = document.getElementById('loading-state');
             const results = document.getElementById('result-section');
             const btn = document.getElementById('fetch-btn');
+            const inputContainer = document.getElementById('input-container');
+            const hero = document.getElementById('hero-section');
 
             loading.classList.remove('hidden');
             results.classList.add('hidden');
@@ -332,50 +532,279 @@
                     currentData = res.data;
                     displayResults();
                     preloadAudio();
+                    inputContainer.classList.add('hidden');
+                    hero.classList.add('hidden');
                 } else {
-                    throw new Error(res.msg || "Invalid TikTok Link");
+                    throw new Error(res.msg || "Link seems invalid or private.");
                 }
             } catch (err) {
-                alert("Error: " + err.message);
+                showToast(err.message);
             } finally {
                 loading.classList.add('hidden');
                 btn.disabled = false;
             }
         }
 
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full font-bold shadow-2xl z-[100] fade-in-up text-sm whitespace-nowrap';
+            toast.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i> ${msg}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
         async function preloadAudio() {
             try {
                 const response = await fetch(currentData.music);
                 const arrayBuffer = await response.arrayBuffer();
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                decodedAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            } catch (e) { console.error("Preload error", e); }
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                decodedAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            } catch (e) { console.error("Audio pre-load failed", e); }
         }
 
         function displayResults() {
-            document.getElementById('video-title').innerText = currentData.title || "TikTok Video";
-            document.getElementById('video-link').href = originalInputUrl;
+            const videoElement = document.getElementById('video-player');
+            const galleryElement = document.getElementById('photo-gallery');
+            const videoAssets = document.getElementById('video-assets');
+            const photoAssets = document.getElementById('photo-assets');
+
+            // Reset UI
+            videoElement.pause();
+            if(galleryInterval) clearInterval(galleryInterval);
+
+            document.getElementById('video-title').innerText = currentData.title || "Tiktok Media";
             document.getElementById('video-author').innerText = `@${currentData.author.unique_id}`;
-            document.getElementById('video-thumb').src = currentData.cover;
+
+            // Check if it's a Photo Post or Video Post
+            if (currentData.images && currentData.images.length > 0) {
+                // PHOTO POST logic
+                videoElement.classList.add('hidden');
+                galleryElement.classList.remove('hidden');
+                videoAssets.classList.add('hidden');
+                photoAssets.classList.remove('hidden');
+                document.getElementById('photo-count-label').innerText = `${currentData.images.length} Images inside`;
+                
+                setupPhotoGallery(currentData.images);
+            } else {
+                // NORMAL VIDEO logic
+                galleryElement.classList.add('hidden');
+                videoElement.classList.remove('hidden');
+                photoAssets.classList.add('hidden');
+                videoAssets.classList.remove('hidden');
+
+                videoElement.poster = currentData.cover;
+                videoElement.src = currentData.play;
+            }
+            
             document.getElementById('result-section').classList.remove('hidden');
-            document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function toggleAudioPreview() {
-            if (isPreviewPlaying) {
-                stopAudioPreview();
-            } else {
-                startAudioPreview();
+        function setupPhotoGallery(images) {
+            const imgEl = document.getElementById('current-photo');
+            const dotsContainer = document.getElementById('photo-dots');
+            
+            let currentIndex = 0;
+            imgEl.src = images[0];
+            
+            dotsContainer.innerHTML = images.map((_, i) => 
+                `<div class="w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-white' : 'bg-white/30'}"></div>`
+            ).join('');
+
+            galleryInterval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % images.length;
+                imgEl.style.opacity = '0.5';
+                setTimeout(() => {
+                    imgEl.src = images[currentIndex];
+                    imgEl.style.opacity = '1';
+                    
+                    // Update dots
+                    Array.from(dotsContainer.children).forEach((dot, i) => {
+                        dot.className = `w-1.5 h-1.5 rounded-full transition-all ${i === currentIndex ? 'bg-white scale-125' : 'bg-white/30'}`;
+                    });
+                }, 250);
+            }, 2500);
+        }
+
+        async function downloadAllPhotos() {
+            if (!currentData || !currentData.images) return;
+            const btn = document.getElementById('download-photos-btn');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'bg-emerald-50');
+            const label = btn.querySelector('.label');
+            label.innerHTML = `<span class="flex items-center gap-2"><div class="loader text-emerald-600"></div> Downloading...</span>`;
+
+            try {
+                for (let i = 0; i < currentData.images.length; i++) {
+                    const src = currentData.images[i];
+                    const response = await fetch(src);
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Naztok_Photo_${currentData.id}_${i+1}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    }, 500);
+
+                    // Pause slightly between downloads to prevent browser blocking
+                    await new Promise(r => setTimeout(r, 600));
+                }
+                showToast("Photos downloaded successfully!");
+            } catch (err) {
+                showToast("Download failed. Your browser might be blocking multiple popups.");
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'bg-emerald-50');
+                btn.innerHTML = originalHTML;
             }
         }
 
-        function startAudioPreview() {
-            if (!decodedAudioBuffer || !audioContext) return;
+        async function renderPhotosToVideo() {
+            if (!currentData || !currentData.images) return;
             
+            const btn = document.getElementById('render-video-btn');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'bg-purple-50');
+            const label = btn.querySelector('.label');
+            label.innerHTML = `<span class="flex items-center gap-2"><div class="loader text-purple-600"></div> Rendering...</span>`;
+
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 720;
+                canvas.height = 1280;
+                const ctx = canvas.getContext('2d');
+                
+                const images = currentData.images;
+                const durationPerImage = 2500; // 2.5s per photo
+
+                // Load images as blobs to prevent canvas CORS poisoning
+                const loadedImageBlobs = await Promise.all(images.map(async src => {
+                    const res = await fetch(src);
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        img.src = url;
+                    });
+                }));
+
+                const stream = canvas.captureStream(30);
+                let renderAudioNode = null;
+                
+                // Mix in Audio
+                if (decodedAudioBuffer && audioCtx) {
+                    const destNode = audioCtx.createMediaStreamDestination();
+                    renderAudioNode = audioCtx.createBufferSource();
+                    renderAudioNode.buffer = decodedAudioBuffer;
+                    renderAudioNode.connect(destNode);
+                    stream.addTrack(destNode.stream.getAudioTracks()[0]);
+                }
+
+                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                const chunks = [];
+                recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+                
+                const renderPromise = new Promise(resolve => {
+                    recorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'video/webm' });
+                        resolve(blob);
+                    };
+                });
+
+                recorder.start();
+                if (renderAudioNode) renderAudioNode.start(0);
+
+                let startTime = performance.now();
+                
+                function drawFrame(now) {
+                    const elapsed = now - startTime;
+                    const imgIndex = Math.floor(elapsed / durationPerImage);
+                    
+                    if (imgIndex < loadedImageBlobs.length) {
+                        const img = loadedImageBlobs[imgIndex];
+                        
+                        // Fill background
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Calculate Aspect Ratio Fit
+                        const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                        const w = img.width * scale;
+                        const h = img.height * scale;
+                        const x = (canvas.width - w) / 2;
+                        const y = (canvas.height - h) / 2;
+                        
+                        ctx.drawImage(img, x, y, w, h);
+                        requestAnimationFrame(drawFrame);
+                    } else {
+                        recorder.stop();
+                        if (renderAudioNode) renderAudioNode.stop();
+                    }
+                }
+                
+                requestAnimationFrame(drawFrame);
+                
+                // Wait for recorder to finish
+                const finalVideoBlob = await renderPromise;
+                const url = URL.createObjectURL(finalVideoBlob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Naztok_Slideshow_${currentData.id}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 1000);
+
+                showToast("Slideshow rendered and downloaded successfully!");
+
+            } catch (err) {
+                console.error(err);
+                showToast("Rendering failed. Please try downloading individual photos.");
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'bg-purple-50');
+                btn.innerHTML = originalHTML;
+            }
+        }
+
+        async function toggleAudioPreview() {
+            if (isPreviewPlaying) {
+                const speed = parseFloat(document.getElementById('speed-range').value);
+                pauseOffset += (audioCtx.currentTime - playbackStartTime) * speed;
+                if(decodedAudioBuffer && pauseOffset >= decodedAudioBuffer.duration) pauseOffset = 0;
+                stopAudioPreview();
+            } else {
+                if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+                startAudioPreview(pauseOffset);
+            }
+        }
+
+        function startAudioPreview(offset = 0) {
+            if (!decodedAudioBuffer || !audioCtx) return;
             stopAudioPreview();
             
-            sourceNode = audioContext.createBufferSource();
+            // Pause HTML5 video if it's playing
+            document.getElementById('video-player').pause();
+            
+            sourceNode = audioCtx.createBufferSource();
             sourceNode.buffer = decodedAudioBuffer;
+            sourceNode.loop = isLooping;
             
             const speed = parseFloat(document.getElementById('speed-range').value);
             const pitch = parseInt(document.getElementById('pitch-range').value);
@@ -383,17 +812,30 @@
             sourceNode.playbackRate.value = speed;
             sourceNode.detune.value = pitch * 100;
             
-            sourceNode.connect(audioContext.destination);
-            sourceNode.start(0);
+            sourceNode.connect(audioCtx.destination);
+            sourceNode.start(0, offset);
+            
+            playbackStartTime = audioCtx.currentTime;
+            pauseOffset = offset;
             
             isPreviewPlaying = true;
             document.getElementById('preview-play-btn').innerHTML = `<i class="fas fa-pause"></i> <span>Pause Preview</span>`;
-            document.getElementById('preview-status').innerText = "Playing...";
+            document.getElementById('preview-status').innerText = "Streaming...";
+            document.getElementById('audio-total-time').innerText = formatTime(decodedAudioBuffer.duration);
+            
+            if(audioProgressInterval) clearInterval(audioProgressInterval);
+            audioProgressInterval = setInterval(updateProgress, 50);
             
             sourceNode.onended = () => {
-                isPreviewPlaying = false;
-                document.getElementById('preview-play-btn').innerHTML = `<i class="fas fa-play"></i> <span>Play Preview</span>`;
-                document.getElementById('preview-status').innerText = "Finished";
+                if (isPreviewPlaying && !isLooping) {
+                    isPreviewPlaying = false;
+                    document.getElementById('preview-play-btn').innerHTML = `<i class="fas fa-play"></i> <span>Play Preview</span>`;
+                    document.getElementById('preview-status').innerText = "Ready";
+                    clearInterval(audioProgressInterval);
+                    document.getElementById('progress-range').value = 0;
+                    document.getElementById('audio-current-time').innerText = "0:00";
+                    pauseOffset = 0;
+                }
             };
         }
 
@@ -402,22 +844,83 @@
                 try { sourceNode.stop(); } catch(e) {}
                 sourceNode = null;
             }
+            if(audioProgressInterval) clearInterval(audioProgressInterval);
             isPreviewPlaying = false;
             document.getElementById('preview-play-btn').innerHTML = `<i class="fas fa-play"></i> <span>Play Preview</span>`;
             document.getElementById('preview-status').innerText = "Stopped";
+        }
+        
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function toggleLoop() {
+            isLooping = !isLooping;
+            const loopBtn = document.getElementById('loop-btn');
+            if (isLooping) {
+                loopBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-900/50 text-green-400 hover:text-green-300 transition-all active:scale-95";
+                document.getElementById('loop-text').innerText = 'Loop: ON';
+            } else {
+                loopBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-all active:scale-95";
+                document.getElementById('loop-text').innerText = 'Loop: OFF';
+            }
+            if (sourceNode) sourceNode.loop = isLooping;
+        }
+
+        function handleSeekInput(val) {
+            isDraggingSeek = true;
+            if(!decodedAudioBuffer) return;
+            const targetTime = (val / 100) * decodedAudioBuffer.duration;
+            document.getElementById('audio-current-time').innerText = formatTime(targetTime);
+        }
+
+        function seekAudio(val) {
+            isDraggingSeek = false;
+            if(!decodedAudioBuffer) return;
+            pauseOffset = (val / 100) * decodedAudioBuffer.duration;
+            if (isPreviewPlaying) {
+                startAudioPreview(pauseOffset);
+            } else {
+                document.getElementById('audio-current-time').innerText = formatTime(pauseOffset);
+            }
+        }
+
+        function updateProgress() {
+            if(!isPreviewPlaying || isDraggingSeek || !decodedAudioBuffer) return;
+            const speed = parseFloat(document.getElementById('speed-range').value);
+            let currentPlayTime = pauseOffset + (audioCtx.currentTime - playbackStartTime) * speed;
+            
+            if (isLooping && currentPlayTime >= decodedAudioBuffer.duration) {
+                currentPlayTime = currentPlayTime % decodedAudioBuffer.duration;
+            }
+            
+            const progressPercent = (currentPlayTime / decodedAudioBuffer.duration) * 100;
+            document.getElementById('progress-range').value = Math.min(progressPercent, 100);
+            document.getElementById('audio-current-time').innerText = formatTime(currentPlayTime);
         }
 
         async function handleDownload(type) {
             if (!currentData) return;
             const downloadUrl = type === 'play' ? currentData.play : currentData.music;
             const ext = type === 'play' ? 'mp4' : type;
-            const fileName = `naztok_${currentData.id}.${ext}`;
-            downloadDirect(downloadUrl, fileName);
-        }
+            const fileName = `Naztok_${currentData.id}.${ext}`;
+            lastDownloadConfig = { url: downloadUrl, name: fileName };
+            
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            
+            // UI Animation
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'bg-blue-50');
+            const label = btn.querySelector('.label');
+            const originalLabel = label.innerText;
+            label.innerHTML = `<span class="flex items-center gap-2"><div class="loader text-blue-600"></div> Processing...</span>`;
 
-        async function downloadDirect(url, fileName) {
             try {
-                const response = await fetch(url);
+                const response = await fetch(downloadUrl);
                 const blob = await response.blob();
                 const blobUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -428,9 +931,23 @@
                 setTimeout(() => {
                     window.URL.revokeObjectURL(blobUrl);
                     document.body.removeChild(a);
-                }, 100);
+                }, 1000);
+                
+                document.getElementById('post-download-help').classList.remove('hidden');
             } catch (err) {
-                window.open(url, '_blank');
+                window.open(downloadUrl, '_blank');
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-80', 'bg-blue-50');
+                    label.innerText = originalLabel;
+                }, 2000);
+            }
+        }
+
+        function retryLastDownload() {
+            if (lastDownloadConfig) {
+                window.open(lastDownloadConfig.url, '_blank');
             }
         }
 
@@ -443,7 +960,7 @@
             const renderBtn = document.getElementById('render-btn');
 
             renderBtn.disabled = true;
-            renderBtn.innerHTML = `<div class="loader"></div> <span>Rendering...</span>`;
+            renderBtn.innerHTML = `<div class="loader"></div> <span>Processing Mix...</span>`;
 
             try {
                 const offlineCtx = new OfflineAudioContext(
@@ -463,18 +980,19 @@
                 const renderedBuffer = await offlineCtx.startRendering();
                 const wavBlob = audioBufferToWav(renderedBuffer);
 
-                const fileName = `naztok_lab_mix_${currentData.id}.wav`;
+                const fileName = `Naztok_LabMix_${currentData.id}.wav`;
                 const blobUrl = URL.createObjectURL(wavBlob);
                 
                 const a = document.createElement('a');
                 a.href = blobUrl;
                 a.download = fileName;
                 a.click();
+                
             } catch (err) {
-                alert("Render error: Browser memory limit reached.");
+                showToast("Render error.");
             } finally {
                 renderBtn.disabled = false;
-                renderBtn.innerHTML = `<i class="fas fa-magic"></i> <span>Render & Download Lab Mix</span>`;
+                renderBtn.innerHTML = `<i class="fas fa-wand-magic-sparkles"></i> <span>Render & Export Lab Mix</span>`;
             }
         }
 

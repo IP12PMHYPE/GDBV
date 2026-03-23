@@ -192,10 +192,11 @@
 
             <div class="md:col-span-3 space-y-6">
                 <div class="flex bg-gray-100 p-2 rounded-2xl">
-                    <button onclick="switchTab('download')" id="tab-download" class="flex-1 py-3.5 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm">Exports</button>
-                    <button onclick="switchTab('lab')" id="tab-lab" class="flex-1 py-3.5 rounded-xl text-sm font-black text-gray-500">Audio Lab ✨</button>
+                    <button onclick="switchTab('download')" id="tab-download" class="flex-1 py-3.5 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm transition-all">Exports</button>
+                    <button onclick="switchTab('lab')" id="tab-lab" class="flex-1 py-3.5 rounded-xl text-sm font-black text-gray-500 transition-all">Audio Lab ✨</button>
                 </div>
 
+                <!-- DOWNLOAD TAB CONTENT -->
                 <div id="content-download" class="space-y-6 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                     <div>
                         <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4"><i class="fas fa-video mr-1"></i> Video Formats</h3>
@@ -207,6 +208,7 @@
                     </div>
                 </div>
 
+                <!-- AUDIO LAB TAB CONTENT -->
                 <div id="content-lab" class="hidden space-y-4">
                     <div class="bg-gray-900 p-6 rounded-3xl text-white space-y-4 shadow-xl">
                         <div class="flex justify-between items-center mb-2">
@@ -220,14 +222,17 @@
                             <div class="flex justify-between text-sm font-black mb-3 text-gray-700"><span>Playback Speed</span><span id="speed-val" class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded">1.00x</span></div>
                             <input type="range" id="speed-range" min="0.5" max="2.0" step="0.01" value="1.0" oninput="updateLab('speed', this.value)">
                         </div>
-                        <div id="pro-controls" class="hidden pt-5 border-t border-gray-100 space-y-5">
+                        <div id="pro-controls-lab" class="hidden pt-5 border-t border-gray-100 space-y-5">
                             <div>
                                 <div class="flex justify-between text-sm font-black mb-3 text-gray-700"><span>Bass Boost (PRO)</span><span id="bass-val" class="text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded">0dB</span></div>
-                                <input type="range" id="bass-range" min="-10" max="20" step="1" value="0" oninput="updateLab('bass', this.value)">
+                                <input type="range" id="bass-range" min="-10" max="25" step="1" value="0" oninput="updateLab('bass', this.value)">
                             </div>
                         </div>
+                        <div id="free-notice" class="pt-2 text-center">
+                            <button onclick="toggleProModal(true)" class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-yellow-600 transition-colors">Unlock Pro EQ Controls</button>
+                        </div>
                     </div>
-                    <button onclick="renderAudio()" id="render-btn" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 text-lg"><i class="fas fa-magic mr-2"></i> Export Mastered Audio</button>
+                    <button id="render-btn" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 text-lg"><i class="fas fa-magic mr-2"></i> Export Mastered Audio</button>
                 </div>
                 <button onclick="location.reload()" class="w-full text-gray-400 font-bold text-sm py-2">Download Another Media</button>
             </div>
@@ -262,7 +267,8 @@
             localStorage.setItem('gdbv_pro_active', 'true');
             document.getElementById('nav-pro-badge').classList.remove('hidden');
             document.getElementById('upgrade-btn').classList.add('hidden');
-            document.getElementById('pro-controls').classList.remove('hidden');
+            document.getElementById('pro-controls-lab').classList.remove('hidden');
+            document.getElementById('free-notice').classList.add('hidden');
             buildGrids();
             if(!silent) showToast("Pro Features Activated!", "success");
         }
@@ -308,32 +314,42 @@
                 document.getElementById('video-author').innerText = `@${currentData.author.unique_id}`;
                 buildGrids();
                 document.getElementById('result-section').classList.remove('hidden');
-                // Pre-load audio for lab
-                const ab = await fetch(currentData.music).then(r => r.arrayBuffer());
+                
+                // Initialize Audio Context and Buffer
                 if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const ab = await fetch(currentData.music).then(r => r.arrayBuffer());
                 audioBuffer = await audioCtx.decodeAudioData(ab);
-            } catch(e) { showToast("Fetch Failed", "error"); location.reload(); }
+            } catch(e) { 
+                showToast("Fetch Failed", "error"); 
+                document.getElementById('input-container').classList.remove('hidden');
+            }
             document.getElementById('loading-state').classList.add('hidden');
         }
 
         function togglePlay() { if(isPlaying) stopAudio(); else startAudio(); }
+        
         function startAudio() {
             if(!audioBuffer) return;
             isPlaying = true;
             document.getElementById('play-btn').innerText = "Stop Preview";
+            
             source = audioCtx.createBufferSource();
             source.buffer = audioBuffer;
+            
             bassNode = audioCtx.createBiquadFilter();
             bassNode.type = "lowshelf";
             bassNode.frequency.value = 200;
             bassNode.gain.value = window.isPro ? document.getElementById('bass-range').value : 0;
+            
             source.playbackRate.value = document.getElementById('speed-range').value;
             source.connect(bassNode).connect(audioCtx.destination);
+            
             startTime = audioCtx.currentTime;
             source.start(0, offset);
             source.onended = () => { if(isPlaying) stopAudio(); };
             updateProgress();
         }
+
         function stopAudio() {
             isPlaying = false;
             document.getElementById('play-btn').innerText = "Play Preview";
@@ -343,8 +359,10 @@
                 offset += (audioCtx.currentTime - startTime) * rate;
                 if(offset >= audioBuffer.duration) offset = 0;
                 source.stop();
+                source = null;
             }
         }
+
         function updateProgress() {
             if(!isPlaying) return;
             const rate = document.getElementById('speed-range').value;
@@ -354,22 +372,50 @@
             document.getElementById('lab-timer').innerText = `${m}:${s.toString().padStart(2,'0')} / ${Math.floor(audioBuffer.duration/60)}:${Math.floor(audioBuffer.duration%60).toString().padStart(2,'0')}`;
             animationFrame = requestAnimationFrame(updateProgress);
         }
-        function seek(v) { stopAudio(); offset = (v/100) * audioBuffer.duration; startAudio(); }
-        function updateLab(t, v) { 
-            if(t==='speed') document.getElementById('speed-val').innerText = `${parseFloat(v).toFixed(2)}x`;
-            if(t==='bass') document.getElementById('bass-val').innerText = `${v}dB`;
+
+        function seek(v) { 
+            const wasPlaying = isPlaying;
+            stopAudio(); 
+            offset = (v/100) * audioBuffer.duration; 
+            if(wasPlaying) startAudio(); 
         }
+
+        function updateLab(t, v) { 
+            if(t==='speed') {
+                document.getElementById('speed-val').innerText = `${parseFloat(v).toFixed(2)}x`;
+                if(source) source.playbackRate.value = v;
+            }
+            if(t==='bass') {
+                document.getElementById('bass-val').innerText = `${v}dB`;
+                if(bassNode) bassNode.gain.value = v;
+            }
+        }
+
         function switchTab(t) {
-            document.getElementById('content-download').classList.toggle('hidden', t!=='download');
-            document.getElementById('content-lab').classList.toggle('hidden', t!=='lab');
-            if(t!=='lab' && isPlaying) stopAudio();
+            const dBtn = document.getElementById('tab-download');
+            const lBtn = document.getElementById('tab-lab');
+            const dContent = document.getElementById('content-download');
+            const lContent = document.getElementById('content-lab');
+
+            if(t === 'download') {
+                dBtn.className = "flex-1 py-3.5 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm";
+                lBtn.className = "flex-1 py-3.5 rounded-xl text-sm font-black text-gray-500";
+                dContent.classList.remove('hidden');
+                lContent.classList.add('hidden');
+                if(isPlaying) stopAudio();
+            } else {
+                lBtn.className = "flex-1 py-3.5 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm";
+                dBtn.className = "flex-1 py-3.5 rounded-xl text-sm font-black text-gray-500";
+                lContent.classList.remove('hidden');
+                dContent.classList.add('hidden');
+            }
         }
 
         async function exportMedia(f, isV) {
             if(f.includes('(Pro)') && !window.isPro) return toggleProModal(true);
             const url = isV ? currentData.play : currentData.music;
             const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-            showToast("Processing request...");
+            showToast("Processing download...");
             try {
                 const res = await fetch(url);
                 const blob = await res.blob();
@@ -379,7 +425,10 @@
                 a.download = `GDBV_${Date.now()}.${f.split(' ')[0].toLowerCase()}`;
                 document.body.appendChild(a);
                 a.click();
-                setTimeout(() => URL.revokeObjectURL(bUrl), 100);
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(bUrl);
+                }, 100);
             } catch(e) {
                 if(isIOS) toggleIOSModal(true, url);
                 else window.open(url, '_blank');

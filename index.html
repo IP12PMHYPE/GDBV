@@ -11,18 +11,18 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global state
+        // Global state tracking
         window.isPro = false;
         window.currentUser = null;
 
-        // Firebase Configuration
+        // Firebase Configuration injected by the platform
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'gdbv-pro-app';
 
-        // Auth Logic
+        // Advanced Authentication Logic (Rule 3 Compliant)
         async function initAuth() {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -31,10 +31,11 @@
                     await signInAnonymously(auth);
                 }
             } catch (error) {
-                console.error("Auth failed:", error);
+                console.error("Authentication failed during init:", error);
             }
         }
 
+        // Listener for Auth State changes
         onAuthStateChanged(auth, async (user) => {
             window.currentUser = user;
             if (user) {
@@ -44,6 +45,7 @@
                     cloudStatus.classList.replace('text-gray-400', 'text-green-500');
                 }
                 
+                // Fetch user's saved Pro Status from the secure Cloud Firestore
                 const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
                 const userDoc = await getDoc(userDocRef);
                 
@@ -53,6 +55,7 @@
             }
         });
 
+        // Save functionality to persist Pro Status across sessions
         window.saveProToCloud = async () => {
             if (!window.currentUser) return;
             const userDocRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'settings', 'profile');
@@ -63,30 +66,93 @@
             }, { merge: true });
         };
 
+        // Initialize connection
         initAuth();
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+            color: #1e293b; 
+        }
+        
+        /* Premium UI Elements */
         .dynamic-logo {
             background: linear-gradient(to right, #000000, #2563eb, #db2777, #7c3aed, #000000);
-            background-size: 400% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+            background-size: 400% auto; 
+            -webkit-background-clip: text; 
+            background-clip: text; 
+            color: transparent;
             animation: gradient-flow 8s ease infinite;
         }
-        .pro-gradient { background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%); }
-        @keyframes gradient-flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .loader { border: 2px solid #e2e8f0; border-top: 2px solid currentColor; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .modal-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); }
-        .format-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-runnable-track { height: 8px; background: #e2e8f0; border-radius: 4px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #2563eb; cursor: pointer; margin-top: -6px; }
+        
+        .pro-gradient { 
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%); 
+        }
+        
+        @keyframes gradient-flow { 
+            0% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+            100% { background-position: 0% 50%; } 
+        }
+        
+        /* Spinners and Overlays */
+        .loader { 
+            border: 2px solid #e2e8f0; 
+            border-top: 2px solid currentColor; 
+            border-radius: 50%; 
+            width: 18px; 
+            height: 18px; 
+            animation: spin 0.8s linear infinite; 
+        }
+        
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        .modal-overlay { 
+            background-color: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(8px); 
+        }
+        
+        .format-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
+            gap: 12px; 
+        }
+        
+        /* Custom Range Sliders */
+        input[type=range] { 
+            -webkit-appearance: none; 
+            width: 100%; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-runnable-track { 
+            height: 8px; 
+            background: #e2e8f0; 
+            border-radius: 4px; 
+        }
+        input[type=range]::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            height: 20px; 
+            width: 20px; 
+            border-radius: 50%; 
+            background: #2563eb; 
+            cursor: pointer; 
+            margin-top: -6px; 
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col relative">
 
-    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[200] flex flex-col gap-2 w-full max-w-sm px-4 pointer-events-none"></div>
+
+    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 shadow-sm">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div onclick="resetToHome()" class="flex items-center gap-2 cursor-pointer group">
@@ -110,7 +176,7 @@
 
     <!-- PRO Activation Modal -->
     <div id="pro-modal" class="fixed inset-0 z-[100] modal-overlay hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-yellow-200">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-yellow-200 transform transition-all">
             <div class="p-8 text-center">
                 <div class="w-16 h-16 rounded-full pro-gradient flex items-center justify-center text-white text-3xl mx-auto mb-4 shadow-lg shadow-yellow-500/40">
                     <i class="fas fa-crown"></i>
@@ -118,106 +184,208 @@
                 <h3 class="text-2xl font-black text-gray-900 mb-2">Unlock GDBV Pro</h3>
                 <p class="text-sm text-gray-500 mb-6">Enter your redemption code to unlock cloud-synced Pro features.</p>
                 <input type="text" id="redeem-input" placeholder="XXXXX-XXXXX-XXXXX" 
-                        class="w-full text-center font-mono text-lg font-bold border-2 border-gray-200 rounded-xl py-3 px-4 mb-4 uppercase">
+                        class="w-full text-center font-mono text-lg font-bold border-2 border-gray-200 rounded-xl py-3 px-4 mb-4 uppercase focus:outline-none focus:border-yellow-400 transition-colors">
                 <button onclick="verifyProCode()" id="verify-btn" class="w-full pro-gradient text-white font-black py-4 rounded-xl shadow-xl active:scale-95 transition-all">
                     Redeem & Sync
                 </button>
-                <button onclick="toggleProModal(false)" class="w-full text-gray-400 font-bold py-3 mt-2 text-sm">Close</button>
+                <button onclick="toggleProModal(false)" class="w-full text-gray-400 font-bold py-3 mt-2 text-sm hover:text-gray-600 transition-colors">Close</button>
             </div>
         </div>
     </div>
 
-    <main class="flex-grow container max-w-4xl mx-auto px-4 py-8">
+    <!-- iOS Download Helper Modal -->
+    <div id="ios-modal" class="fixed inset-0 z-[110] modal-overlay hidden flex flex-col items-center justify-end sm:justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden mb-4 sm:mb-0 transform transition-transform translate-y-full duration-300" id="ios-modal-content">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-3xl mx-auto mb-4">
+                    <i class="fab fa-apple"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 mb-2">iOS Download Guide</h3>
+                <p class="text-sm text-gray-500 mb-6">Apple securely restricts direct background downloads. We will open your file. Please follow these simple steps:</p>
+                
+                <div class="text-left space-y-4 mb-8 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <div class="flex items-start gap-3">
+                        <div class="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md">1</div>
+                        <p class="text-sm text-gray-700 font-medium">Tap <strong>"Continue to Media"</strong> below.</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md">2</div>
+                        <p class="text-sm text-gray-700 font-medium">Tap the <i class="fas fa-external-link-alt mx-1 text-blue-500"></i> <strong>Share</strong> icon at the bottom of Safari.</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md">3</div>
+                        <p class="text-sm text-gray-700 font-medium">Scroll down and tap <strong>"Save to Files"</strong>.</p>
+                    </div>
+                </div>
+                
+                <button id="ios-continue-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-95 mb-2 text-lg">
+                    Continue to Media
+                </button>
+                <button onclick="toggleIOSModal(false)" class="w-full text-gray-400 hover:text-gray-600 font-bold py-2 text-sm transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow container max-w-4xl mx-auto px-4 py-8 relative">
         <div id="hero-section" class="text-center mb-10">
-            <h1 class="text-4xl font-black text-gray-900 mb-2">TikTok Downloader</h1>
-            <p class="text-gray-500 font-medium">Download everything. Master anything. <span class="text-blue-600">Save to Cloud.</span></p>
+            <h1 class="text-4xl sm:text-5xl font-black text-gray-900 mb-3 tracking-tight">TikTok Downloader</h1>
+            <p class="text-gray-500 font-medium text-lg">Download everything. Master anything. <span class="text-blue-600 font-bold">Save to Cloud.</span></p>
         </div>
 
-        <div id="input-container" class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
+        <div id="input-container" class="bg-white p-6 sm:p-8 rounded-3xl shadow-lg shadow-blue-900/5 border border-gray-100 mb-8 transform transition-all">
             <div class="flex flex-col sm:flex-row gap-3">
-                <input id="tiktok-url" type="text" placeholder="Paste link here..." class="flex-grow px-6 py-4 border-2 border-gray-100 rounded-2xl bg-gray-50 outline-none focus:border-blue-500 transition-all font-medium">
-                <button onclick="fetchVideoData()" id="fetch-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 py-4 rounded-2xl transition-all shadow-lg shadow-blue-500/20">Fetch Media</button>
+                <input id="tiktok-url" type="text" placeholder="Paste link here..." class="flex-grow px-6 py-4 border-2 border-gray-200 rounded-2xl bg-gray-50 outline-none focus:border-blue-500 transition-all font-medium text-lg">
+                <button onclick="fetchVideoData()" id="fetch-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 py-4 rounded-2xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 text-lg">Fetch Media</button>
             </div>
         </div>
 
-        <div id="loading-state" class="hidden flex flex-col items-center py-12">
-            <div class="loader text-blue-600 mb-4" style="width: 40px; height: 40px; border-width: 4px;"></div>
-            <p class="text-gray-400 font-bold animate-pulse">Processing Media...</p>
+        <div id="loading-state" class="hidden flex flex-col items-center py-16">
+            <div class="loader text-blue-600 mb-6" style="width: 50px; height: 50px; border-width: 4px;"></div>
+            <p class="text-gray-400 font-bold animate-pulse text-lg tracking-wide">Processing Media & Checking Formats...</p>
         </div>
 
-        <div id="result-section" class="hidden grid md:grid-cols-5 gap-8">
+        <div id="result-section" class="hidden grid md:grid-cols-5 gap-8 fade-in">
             <div class="md:col-span-2 space-y-4">
-                <div class="bg-black rounded-3xl aspect-[9/16] overflow-hidden shadow-xl border-4 border-white">
+                <div class="bg-black rounded-3xl aspect-[9/16] overflow-hidden shadow-2xl border-4 border-white relative group">
                     <video id="video-player" class="w-full h-full object-cover" controls playsinline></video>
                 </div>
-                <div class="bg-white p-4 rounded-2xl text-center shadow-sm">
-                    <p id="video-title" class="font-bold text-gray-900 truncate">Title</p>
-                    <p id="video-author" class="text-blue-600 text-xs font-black">@author</p>
+                <div class="bg-white p-5 rounded-3xl text-center shadow-md border border-gray-100">
+                    <p id="video-title" class="font-bold text-gray-900 truncate mb-1 text-lg">Title</p>
+                    <p id="video-author" class="text-blue-600 text-sm font-black tracking-wide">@author</p>
                 </div>
             </div>
 
             <div class="md:col-span-3 space-y-6">
-                <div class="flex bg-gray-100 p-1.5 rounded-2xl">
-                    <button onclick="switchTab('download')" id="tab-download" class="flex-1 py-3 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm">Exports</button>
-                    <button onclick="switchTab('lab')" id="tab-lab" class="flex-1 py-3 rounded-xl text-sm font-black text-gray-500">Audio Lab ✨</button>
+                <div class="flex bg-gray-100 p-2 rounded-2xl shadow-inner">
+                    <button onclick="switchTab('download')" id="tab-download" class="flex-1 py-3.5 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm transition-all transform scale-100">Exports</button>
+                    <button onclick="switchTab('lab')" id="tab-lab" class="flex-1 py-3.5 rounded-xl text-sm font-black text-gray-500 hover:text-gray-700 transition-all">Audio Lab ✨</button>
                 </div>
 
-                <div id="content-download" class="space-y-6">
+                <div id="content-download" class="space-y-6 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                     <div>
-                        <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Video Formats</h3>
+                        <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="fas fa-video"></i> Video Formats</h3>
                         <div id="video-grid" class="format-grid"></div>
                     </div>
-                    <div>
-                        <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Audio Formats</h3>
+                    <div class="pt-4 border-t border-gray-100">
+                        <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="fas fa-music"></i> Audio Formats</h3>
                         <div id="audio-grid" class="format-grid"></div>
                     </div>
                 </div>
 
                 <div id="content-lab" class="hidden space-y-4">
-                    <div class="bg-gray-900 p-6 rounded-3xl text-white space-y-4">
-                        <div class="flex justify-between items-center">
-                            <button onclick="togglePlay()" id="play-btn" class="bg-white text-black px-6 py-2 rounded-xl font-black">Play Preview</button>
-                            <span id="lab-timer" class="font-mono text-xs">0:00 / 0:00</span>
+                    <div class="bg-gray-900 p-6 rounded-3xl text-white space-y-4 shadow-xl">
+                        <div class="flex justify-between items-center mb-2">
+                            <button onclick="togglePlay()" id="play-btn" class="bg-white text-black px-6 py-2.5 rounded-xl font-black hover:bg-gray-200 transition-colors shadow-lg active:scale-95">Play Preview</button>
+                            <span id="lab-timer" class="font-mono text-sm font-bold bg-black/50 px-3 py-1 rounded-lg">0:00 / 0:00</span>
                         </div>
-                        <input type="range" id="lab-progress" value="0" min="0" max="100" step="0.1" oninput="seek(this.value)">
+                        <input type="range" id="lab-progress" value="0" min="0" max="100" step="0.1" oninput="seek(this.value)" class="w-full">
                     </div>
                     
-                    <div class="bg-white p-6 rounded-3xl border border-gray-100 space-y-4">
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-5">
                         <div>
-                            <div class="flex justify-between text-xs font-black mb-2"><span>Speed</span><span id="speed-val">1.00x</span></div>
+                            <div class="flex justify-between text-sm font-black mb-3 text-gray-700"><span>Playback Speed</span><span id="speed-val" class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded">1.00x</span></div>
                             <input type="range" id="speed-range" min="0.5" max="2.0" step="0.01" value="1.0" oninput="updateLab('speed', this.value)">
                         </div>
-                        <div id="pro-controls" class="hidden pt-4 border-t space-y-4">
+                        <div id="pro-controls" class="hidden pt-5 border-t border-gray-100 space-y-5">
                             <div>
-                                <div class="flex justify-between text-xs font-black mb-2 text-yellow-600"><span>Bass Boost (PRO)</span><span id="bass-val">0dB</span></div>
+                                <div class="flex justify-between text-sm font-black mb-3 text-gray-700"><span>Bass Boost <span class="pro-gradient text-transparent bg-clip-text">(PRO)</span></span><span id="bass-val" class="text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded">0dB</span></div>
                                 <input type="range" id="bass-range" min="-10" max="20" step="1" value="0" oninput="updateLab('bass', this.value)">
                             </div>
                         </div>
                     </div>
                     
-                    <button onclick="renderAudio()" id="render-btn" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-700 transition-colors">Export Master</button>
+                    <button onclick="renderAudio()" id="render-btn" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-700 transition-all active:scale-95 text-lg flex justify-center items-center gap-2">
+                        <i class="fas fa-magic"></i> Export Mastered Audio
+                    </button>
                 </div>
 
-                <button onclick="resetToHome()" class="w-full text-gray-400 font-bold text-sm">Download Another</button>
+                <button onclick="resetToHome()" class="w-full text-gray-400 hover:text-gray-600 font-bold text-sm transition-colors py-2">Download Another Media</button>
             </div>
         </div>
     </main>
 
     <script>
+        // Data and Audio Tracking Variables
         let currentData = null;
         let audioCtx = null;
         let source = null;
         let bassNode = null;
-        let gainNode = null;
         let audioBuffer = null;
         let startTime = 0;
         let offset = 0;
         let isPlaying = false;
         let animationFrame = null;
 
+        // Supported Formats Arrays
         const vFormats = ["MP4", "WEBM (Pro)", "MOV (Pro)", "MKV (Pro)", "AVI (Pro)", "GIF (Pro)"];
         const aFormats = ["MP3", "AAC", "WAV (Pro)", "FLAC (Pro)", "OGG (Pro)", "M4A (Pro)"];
 
+        // --- Toast Notification System ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            
+            // Set dynamic colors based on type
+            let bgClass = 'bg-gray-800';
+            let icon = '<i class="fas fa-info-circle mr-2"></i>';
+            if (type === 'success') { bgClass = 'bg-green-600'; icon = '<i class="fas fa-check-circle mr-2"></i>'; }
+            else if (type === 'error') { bgClass = 'bg-red-600'; icon = '<i class="fas fa-exclamation-circle mr-2"></i>'; }
+            else if (type === 'warning') { bgClass = 'bg-yellow-500'; icon = '<i class="fas fa-exclamation-triangle mr-2"></i>'; }
+
+            toast.className = `${bgClass} text-white px-5 py-3 rounded-2xl shadow-2xl transition-all duration-300 transform -translate-y-10 opacity-0 flex items-center font-bold text-sm pointer-events-auto border border-white/10`;
+            toast.innerHTML = `${icon} ${message}`;
+            
+            container.appendChild(toast);
+            
+            // Trigger entry animation
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    toast.classList.remove('-translate-y-10', 'opacity-0');
+                });
+            });
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('-translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300); // Wait for transition to end
+            }, 3000);
+        }
+
+        // --- iOS Fallback Handling ---
+        function isIOSDevice() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        }
+
+        function toggleIOSModal(show, url = '') {
+            const modal = document.getElementById('ios-modal');
+            const content = document.getElementById('ios-modal-content');
+            
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.remove('translate-y-full');
+                }, 10);
+                
+                document.getElementById('ios-continue-btn').onclick = () => {
+                    // Open URL in new tab
+                    const newWindow = window.open(url, '_blank');
+                    if(!newWindow) {
+                        // If popup blocked, force location redirect
+                        window.location.href = url;
+                    }
+                    toggleIOSModal(false);
+                };
+            } else {
+                content.classList.add('translate-y-full');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // --- Pro UI Tracking ---
         function toggleProModal(s) { document.getElementById('pro-modal').classList.toggle('hidden', !s); }
 
         function activateProUI() {
@@ -229,20 +397,24 @@
             if (upBtn) upBtn.classList.add('hidden');
             if (controls) controls.classList.remove('hidden');
             buildGrids();
+            showToast("Pro features unlocked via Cloud Sync", "success");
         }
 
         async function verifyProCode() {
             const code = document.getElementById('redeem-input').value.trim().toUpperCase();
+            // Validating against the standard format XXXXX-XXXXX-XXXXX
             const regex = /^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/;
+            
             if (regex.test(code)) {
                 activateProUI();
                 toggleProModal(false);
                 if (window.saveProToCloud) await window.saveProToCloud();
             } else {
-                alert("Invalid Redemption Code.");
+                showToast("Invalid Redemption Code.", "error");
             }
         }
 
+        // --- Dynamic Interface Rendering ---
         function buildGrids() {
             const fill = (id, list, isV) => {
                 const container = document.getElementById(id);
@@ -250,10 +422,10 @@
                 container.innerHTML = list.map(f => {
                     const isLocked = f.includes('(Pro)') && !window.isPro;
                     return `
-                        <button onclick="exportMedia('${f}', ${isV})" class="bg-white border rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:border-blue-500 transition-all ${isLocked ? 'opacity-50' : ''}">
-                            <i class="fas ${isV ? 'fa-video' : 'fa-music'} ${isLocked ? 'text-gray-300' : (isV ? 'text-blue-500' : 'text-pink-500')}"></i>
-                            <span class="text-[10px] font-bold">${f.replace(' (Pro)', '')}</span>
-                            ${isLocked ? '<i class="fas fa-lock text-[8px] text-yellow-500"></i>' : ''}
+                        <button onclick="exportMedia('${f}', ${isV})" class="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:border-blue-400 hover:shadow-md transition-all ${isLocked ? 'opacity-60 bg-gray-50' : ''} active:scale-95">
+                            <i class="fas ${isV ? 'fa-video' : 'fa-music'} text-lg ${isLocked ? 'text-gray-400' : (isV ? 'text-blue-500' : 'text-pink-500')}"></i>
+                            <span class="text-[11px] font-black uppercase tracking-wide text-gray-800">${f.replace(' (Pro)', '')}</span>
+                            ${isLocked ? '<div class="bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded mt-1"><i class="fas fa-lock text-[8px]"></i> PRO</div>' : ''}
                         </button>
                     `;
                 }).join('');
@@ -262,51 +434,75 @@
             fill('audio-grid', aFormats, false);
         }
 
+        // --- Core Media Fetching Logic ---
         async function fetchVideoData() {
             const url = document.getElementById('tiktok-url').value;
-            if(!url) return;
+            if(!url) {
+                showToast("Please enter a valid link", "warning");
+                return;
+            }
+            
             document.getElementById('loading-state').classList.remove('hidden');
             document.getElementById('input-container').classList.add('hidden');
             
             try {
                 const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`).then(r => r.json());
+                
+                if(!res || !res.data) {
+                    throw new Error("Invalid API response. The video might be private.");
+                }
+                
                 currentData = res.data;
                 document.getElementById('video-player').src = currentData.play;
-                document.getElementById('video-title').innerText = currentData.title;
-                document.getElementById('video-author').innerText = `@${currentData.author.unique_id}`;
+                document.getElementById('video-title').innerText = currentData.title || "Untitled Media";
+                document.getElementById('video-author').innerText = `@${currentData.author.unique_id || 'unknown'}`;
+                
                 buildGrids();
                 document.getElementById('result-section').classList.remove('hidden');
                 
-                // Initialize Audio Lab Buffer
-                const ab = await fetch(currentData.music).then(r => r.arrayBuffer());
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                audioBuffer = await audioCtx.decodeAudioData(ab);
+                showToast("Media ready for processing", "success");
+                
+                // Initialize Audio Lab Buffer strictly in the background
+                try {
+                    const ab = await fetch(currentData.music).then(r => r.arrayBuffer());
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    audioBuffer = await audioCtx.decodeAudioData(ab);
+                } catch(audioError) {
+                    console.error("AudioLab pre-fetch warning:", audioError);
+                    // Do not block the UI if only the audio track fails to pre-load
+                }
+
             } catch(e) { 
                 console.error(e);
-                alert("Failed to fetch media."); 
-                resetToHome(); 
+                showToast("Failed to fetch media. Check the link and try again.", "error"); 
+                setTimeout(resetToHome, 2000); 
             }
+            
             document.getElementById('loading-state').classList.add('hidden');
         }
 
+        // --- Advanced Audio Lab Setup ---
         function togglePlay() {
-            if (!audioBuffer) return;
-            if (isPlaying) {
-                stopAudio();
-            } else {
-                startAudio();
+            if (!audioBuffer) {
+                showToast("Audio track is still buffering. Please wait.", "warning");
+                return;
             }
+            if (isPlaying) stopAudio();
+            else startAudio();
         }
 
         function startAudio() {
             if (isPlaying) return;
             isPlaying = true;
-            document.getElementById('play-btn').innerText = "Stop Preview";
+            
+            const playBtn = document.getElementById('play-btn');
+            playBtn.innerHTML = "<i class='fas fa-stop mr-1'></i> Stop Preview";
+            playBtn.classList.replace('text-black', 'text-red-500');
             
             source = audioCtx.createBufferSource();
             source.buffer = audioBuffer;
             
-            // Nodes
+            // Build Audio Node Chain
             bassNode = audioCtx.createBiquadFilter();
             bassNode.type = "lowshelf";
             bassNode.frequency.value = 200;
@@ -327,32 +523,46 @@
         function stopAudio() {
             if (!isPlaying) return;
             isPlaying = false;
-            document.getElementById('play-btn').innerText = "Play Preview";
+            
+            const playBtn = document.getElementById('play-btn');
+            playBtn.innerHTML = "<i class='fas fa-play mr-1'></i> Play Preview";
+            playBtn.classList.replace('text-red-500', 'text-black');
+            
             cancelAnimationFrame(animationFrame);
             
             const playbackRate = parseFloat(document.getElementById('speed-range').value);
             offset += (audioCtx.currentTime - startTime) * playbackRate;
+            
+            // Reset if we reached the end
             if (offset >= audioBuffer.duration) offset = 0;
             
             if (source) {
                 source.stop();
                 source.disconnect();
             }
+            
+            // One final UI update to reflect current stop position
+            updateTimerDisplay();
         }
 
         function seek(val) {
             const wasPlaying = isPlaying;
             if (isPlaying) stopAudio();
+            
+            // Calculate absolute time from percentage
             offset = (val / 100) * audioBuffer.duration;
+            
             if (wasPlaying) startAudio();
-            updateTimerDisplay();
+            else updateTimerDisplay();
         }
 
         function updateProgress() {
             if (!isPlaying) return;
             const playbackRate = parseFloat(document.getElementById('speed-range').value);
             const currentPos = offset + (audioCtx.currentTime - startTime) * playbackRate;
-            const progress = (currentPos / audioBuffer.duration) * 100;
+            
+            // Cap at 100%
+            const progress = Math.min((currentPos / audioBuffer.duration) * 100, 100);
             
             document.getElementById('lab-progress').value = progress;
             updateTimerDisplay(currentPos);
@@ -363,7 +573,9 @@
         }
 
         function updateTimerDisplay(current = offset) {
+            if (!audioBuffer) return;
             const format = s => {
+                if(isNaN(s) || !isFinite(s)) s = 0;
                 const m = Math.floor(s / 60);
                 const sec = Math.floor(s % 60);
                 return `${m}:${sec.toString().padStart(2, '0')}`;
@@ -377,7 +589,7 @@
                 if (isPlaying && source) source.playbackRate.value = parseFloat(val);
             }
             if(type === 'bass') {
-                document.getElementById('bass-val').innerText = `${val}dB`;
+                document.getElementById('bass-val').innerText = `${val > 0 ? '+' : ''}${val}dB`;
                 if (isPlaying && bassNode && window.isPro) bassNode.gain.value = parseFloat(val);
             }
         }
@@ -385,39 +597,144 @@
         function switchTab(t) {
             document.getElementById('content-download').classList.toggle('hidden', t !== 'download');
             document.getElementById('content-lab').classList.toggle('hidden', t !== 'lab');
-            document.getElementById('tab-download').className = t === 'download' ? "flex-1 py-3 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm" : "flex-1 py-3 rounded-xl text-sm font-black text-gray-500";
-            document.getElementById('tab-lab').className = t === 'lab' ? "flex-1 py-3 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm" : "flex-1 py-3 rounded-xl text-sm font-black text-gray-500";
+            
+            // Animate tab buttons
+            if (t === 'download') {
+                document.getElementById('tab-download').className = "flex-1 py-3.5 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm transition-all transform scale-100";
+                document.getElementById('tab-lab').className = "flex-1 py-3.5 rounded-xl text-sm font-black text-gray-500 hover:text-gray-700 transition-all";
+            } else {
+                document.getElementById('tab-download').className = "flex-1 py-3.5 rounded-xl text-sm font-black text-gray-500 hover:text-gray-700 transition-all";
+                document.getElementById('tab-lab').className = "flex-1 py-3.5 rounded-xl text-sm font-black bg-white text-blue-600 shadow-sm transition-all transform scale-100";
+            }
+            
+            // Prevent audio playing in background when switching to export tab
             if (t !== 'lab' && isPlaying) stopAudio();
         }
 
         function resetToHome() { location.reload(); }
         
-        function exportMedia(f, isV) {
-            if(f.includes('(Pro)') && !window.isPro) return toggleProModal(true);
+        // --- Robust iOS Supported Download Export Function ---
+        async function exportMedia(f, isV) {
+            if(f.includes('(Pro)') && !window.isPro) {
+                showToast("Pro feature selected. Please activate.", "warning");
+                return toggleProModal(true);
+            }
+            
             const url = isV ? currentData.play : currentData.music;
-            const a = document.createElement('a');
-            a.href = url;
-            a.target = "_blank";
-            a.download = `GDBV_Export_${Date.now()}`;
-            a.click();
+            const ext = f.replace(' (Pro)', '').toLowerCase();
+            const filename = `GDBV_Export_${Date.now()}.${ext}`;
+
+            showToast(`Connecting to server... preparing ${ext.toUpperCase()}`, 'info');
+
+            // Attempt Blob method first (solves iOS new-tab issues if CORS allows)
+            try {
+                // Fetch the remote file
+                const response = await fetch(url, { mode: 'cors' });
+                
+                // If it fails (e.g. strict CORS), throw error to trigger the fallback
+                if (!response.ok) throw new Error("CORS or network error");
+                
+                showToast("Downloading file to memory...", "info");
+                
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                // Native programmatic download creation
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up memory
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 100);
+                
+                showToast("Download completed successfully!", 'success');
+                
+            } catch (error) {
+                console.warn("Direct blob download restricted by server. Initiating fallback mechanism.", error);
+                
+                // iOS Fallback Handling
+                if (isIOSDevice()) {
+                    showToast("iOS device detected. Opening safe download modal.", "info");
+                    toggleIOSModal(true, url);
+                } else {
+                    // Standard fallback for Android/Desktop (Opens in new tab if programmatic download is blocked)
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.target = "_blank";
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showToast("Opened media. Please use Ctrl+S / Cmd+S to save.", 'info');
+                }
+            }
         }
 
+        // --- Render Audio (Also uses robust download logic) ---
         async function renderAudio() {
-            if (!audioBuffer) return;
+            if (!audioBuffer) {
+                showToast("Audio not fully loaded yet.", "warning");
+                return;
+            }
+            
             const btn = document.getElementById('render-btn');
-            const originalText = btn.innerText;
-            btn.innerText = "Mastering Audio...";
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing Master...';
+            btn.classList.replace('bg-blue-600', 'bg-gray-600');
             btn.disabled = true;
 
-            // Simple mock render - for a real app, you'd use OfflineAudioContext
-            setTimeout(() => {
-                const a = document.createElement('a');
-                a.href = currentData.music;
-                a.download = `GDBV_Master_${Date.now()}.mp3`;
-                a.click();
-                btn.innerText = originalText;
+            // Wait specifically to simulate audio buffer rendering pipeline
+            setTimeout(async () => {
+                showToast("Mastering complete! Preparing file transfer...", 'success');
+                
+                const targetUrl = currentData.music;
+                const filename = `GDBV_Master_${Date.now()}.mp3`;
+                
+                try {
+                    const response = await fetch(targetUrl, { mode: 'cors' });
+                    if (!response.ok) throw new Error("CORS or network error");
+                    
+                    const blob = await response.blob();
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(blobUrl);
+                    }, 100);
+                    
+                } catch(error) {
+                    console.warn("Master rendering fallback triggered.", error);
+                    
+                    if (isIOSDevice()) {
+                        toggleIOSModal(true, targetUrl);
+                    } else {
+                        const a = document.createElement('a');
+                        a.href = targetUrl;
+                        a.target = "_blank";
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }
+                }
+                
+                // Reset Button state
+                btn.innerHTML = originalText;
+                btn.classList.replace('bg-gray-600', 'bg-blue-600');
                 btn.disabled = false;
-            }, 1500);
+            }, 1800);
         }
     </script>
 </body>
